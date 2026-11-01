@@ -15,11 +15,13 @@ import meteordevelopment.meteorclient.utils.world.BlockUtils;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.HoeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.AzaleaBlock;
 import net.minecraft.world.level.block.Block;
@@ -107,6 +109,20 @@ public class AutoFarm extends Module {
             .build()
     );
 
+    private final Setting<Boolean> plantBelowFeetOnly = sgPlant.add(new BoolSetting.Builder()
+            .name("plant-below-feet-only")
+            .description("Only plant on the block directly below your feet.")
+            .defaultValue(false)
+            .build()
+    );
+
+    private final Setting<Boolean> noPlantThroughWalls = sgPlant.add(new BoolSetting.Builder()
+            .name("no-plant-through-walls")
+            .description("Only plant when there is a clear line of sight to the planting block.")
+            .defaultValue(false)
+            .build()
+    );
+
     private final Setting<List<Item>> plantItems = sgPlant.add(new ItemListSetting.Builder()
             .name("plant-items")
             .description("Which crops to plant.")
@@ -165,6 +181,8 @@ public class AutoFarm extends Module {
             else if (block == Blocks.NETHER_WART) item = Items.NETHER_WART;
             else if (block == Blocks.PITCHER_CROP) item = Items.PITCHER_POD;
             else if (block == Blocks.TORCHFLOWER) item = Items.TORCHFLOWER_SEEDS;
+            else if (block == Blocks.BAMBOO && mc.level.getBlockState(event.blockPos.below()).is(BlockTags.BAMBOO_PLANTABLE_ON))
+                item = Items.BAMBOO;
             if (item != null) replantMap.put(event.blockPos, item);
         }
     }
@@ -223,7 +241,18 @@ public class AutoFarm extends Module {
 
     private boolean plant(BlockPos pos, Block block) {
         if (!plant.get()) return false;
+        if (plantBelowFeetOnly.get() && pos.getY() != mc.player.blockPosition().getY() - 1) return false;
         if (!mc.level.isEmptyBlock(pos.above())) return false;
+        if (noPlantThroughWalls.get()) {
+            BlockHitResult hit = mc.level.clip(new ClipContext(
+                    mc.player.getEyePosition(),
+                    Vec3.atCenterOf(pos),
+                    ClipContext.Block.COLLIDER,
+                    ClipContext.Fluid.NONE,
+                    mc.player
+            ));
+            if (!hit.getBlockPos().equals(pos)) return false;
+        }
         FindItemResult findItemResult = null;
         if (onlyReplant.get()) {
             for (BlockPos replantPos : replantMap.keySet()) {
@@ -242,6 +271,13 @@ public class AutoFarm extends Module {
             findItemResult = InvUtils.find(itemStack -> {
                 Item item = itemStack.getItem();
                 return item == Items.NETHER_WART && plantItems.get().contains(Items.NETHER_WART);
+            });
+        } else if (block != Blocks.BAMBOO &&
+                block != Blocks.BAMBOO_SAPLING &&
+                block.defaultBlockState().is(BlockTags.BAMBOO_PLANTABLE_ON)) {
+            findItemResult = InvUtils.find(itemStack -> {
+                Item item = itemStack.getItem();
+                return item == Items.BAMBOO && plantItems.get().contains(Items.BAMBOO);
             });
         }
         if (findItemResult != null && findItemResult.found()) {
@@ -318,6 +354,7 @@ public class AutoFarm extends Module {
                 item == Items.MELON_SEEDS ||
                 item == Items.NETHER_WART ||
                 item == Items.PITCHER_POD ||
-                item == Items.TORCHFLOWER_SEEDS;
+                item == Items.TORCHFLOWER_SEEDS ||
+                item == Items.BAMBOO;
     }
 }
