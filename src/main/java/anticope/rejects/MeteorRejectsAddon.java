@@ -72,6 +72,7 @@ public class MeteorRejectsAddon extends MeteorAddon {
         modules.add(new Lavacast());
         modules.add(new MossBot());
         modules.add(new NewChunks());
+        modules.add(new NoContainerInteract());
         modules.add(new NoJumpDelay());
         modules.add(new ObsidianFarm());
         modules.add(new OreSim());
