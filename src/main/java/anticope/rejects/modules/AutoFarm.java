@@ -183,6 +183,10 @@ public class AutoFarm extends Module {
             else if (block == Blocks.TORCHFLOWER) item = Items.TORCHFLOWER_SEEDS;
             else if (block == Blocks.BAMBOO && mc.level.getBlockState(event.blockPos.below()).is(BlockTags.BAMBOO_PLANTABLE_ON))
                 item = Items.BAMBOO;
+            else if (block == Blocks.SUGAR_CANE &&
+                    mc.level.getBlockState(event.blockPos.below()).getBlock() != Blocks.SUGAR_CANE &&
+                    Blocks.SUGAR_CANE.defaultBlockState().canSurvive(mc.level, event.blockPos))
+                item = Items.SUGAR_CANE;
             if (item != null) replantMap.put(event.blockPos, item);
         }
     }
@@ -272,6 +276,12 @@ public class AutoFarm extends Module {
                 Item item = itemStack.getItem();
                 return item == Items.NETHER_WART && plantItems.get().contains(Items.NETHER_WART);
             });
+        } else if (block != Blocks.SUGAR_CANE &&
+                Blocks.SUGAR_CANE.defaultBlockState().canSurvive(mc.level, pos.above())) {
+            findItemResult = InvUtils.find(itemStack -> {
+                Item item = itemStack.getItem();
+                return item == Items.SUGAR_CANE && plantItems.get().contains(Items.SUGAR_CANE);
+            });
         } else if (block != Blocks.BAMBOO &&
                 block != Blocks.BAMBOO_SAPLING &&
                 block.defaultBlockState().is(BlockTags.BAMBOO_PLANTABLE_ON)) {
@@ -355,6 +365,7 @@ public class AutoFarm extends Module {
                 item == Items.NETHER_WART ||
                 item == Items.PITCHER_POD ||
                 item == Items.TORCHFLOWER_SEEDS ||
-                item == Items.BAMBOO;
+                item == Items.BAMBOO ||
+                item == Items.SUGAR_CANE;
     }
 }
