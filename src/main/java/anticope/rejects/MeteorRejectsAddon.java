@@ -88,6 +88,7 @@ public class MeteorRejectsAddon extends MeteorAddon {
         modules.add(new TreeAura());
         modules.add(new VehicleOneHit());
         modules.add(new AutoEnchant());
+        modules.add(new AutoTrade());
         modules.add(new AutoRename());
 
         // Commands
