@@ -175,13 +175,8 @@ public class AutoTrade extends Module {
 
         selectedOfferIndex = matchingOffer;
         selectedOfferUses = offer.getUses();
-        menu.setSelectionHint(matchingOffer);
-        menu.tryMoveItems(matchingOffer);
-        if (!offer.satisfiedBy(menu.getSlot(0).getItem(), menu.getSlot(1).getItem())) {
-            tradeState = TradeState.FINISHED;
-            info("Could not fill the selected offer's payment slots; stopping without trading.");
-            return;
-        }
+        // Let the server select the offer and populate payment/result slots; local selection
+        // hints update the result optimistically and can leave a stale book available to click.
         mc.getConnection().send(new ServerboundSelectTradePacket(matchingOffer));
         tradeState = TradeState.WAITING_FOR_RESULT;
         stateTicks = 0;
